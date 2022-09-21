@@ -6,7 +6,7 @@ namespace SocketTcpServer
 {
     class Server
     {
-        static int port = 8080; // порт для приема входящих запросов
+        static int port = 12345; // порт для приема входящих запросов
 
         static void Main(string[] args)
         {
@@ -21,7 +21,7 @@ namespace SocketTcpServer
                 listenSocket.Bind(ipPoint);
 
                 // начинаем прослушивание
-                listenSocket.Listen(10);
+                listenSocket.Listen(1000);
 
                 Console.WriteLine("Сервер запущен");
 
