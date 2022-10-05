@@ -11,6 +11,8 @@ using System.Linq;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Controls.Primitives;
+using System.Threading;
+using System.Windows.Controls;
 
 namespace Client
 {
@@ -21,80 +23,75 @@ namespace Client
     {
 
         //Таймер и счетчик для него
-        static System.Timers.Timer timer;
-        static int counter = 0;
+        static string address = "192.168.3.26";
+
+        private static ManualResetEvent connectDone = new ManualResetEvent(false);
 
         public MainWindow()
         {
             InitializeComponent();
 
-            timer = new System.Timers.Timer(1000);
-            //timer.Elapsed += OnTimedEvent;
-            timer.AutoReset = true;
-            timer.Enabled = true;
-
-            List<PortInfo> pi = MainWindow.GetOpenPort();
-            lv_connections.ItemsSource = pi;
-        }
-
-        private static List<PortInfo> GetOpenPort()
-        {
-            IPGlobalProperties properties = IPGlobalProperties.GetIPGlobalProperties();
-            IPEndPoint[] tcpEndPoints = properties.GetActiveTcpListeners();
-
-            return tcpEndPoints
-                .Where(selected => !selected.Address.ToString().Equals("::") && !selected.Address.ToString().Equals("0.0.0.0"))
-                .Select(passed => 
+            try
+            {
+                List<Port> ports = new List<Port>();
+                //Ищем перебором открытый порт для соединения
+                for (int _port = 8000; _port < 8100; _port++)
                 {
-                    return new PortInfo(
-                        portNumber: passed.Port,
-                        address: passed.Address.ToString(),
-                        local: String.Format("{0}:{1}", passed.Address, passed.Port));
-                }).ToList();
+                    IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse(address), _port);
+                    Socket socket = new Socket(
+                        AddressFamily.InterNetwork,
+                        SocketType.Stream,
+                        ProtocolType.Tcp
+                        );
+
+                    IAsyncResult asyncResult = socket.BeginConnect(
+                        ipPoint,
+                        new AsyncCallback(connectCallback),
+                        socket
+                        );
+
+                    if (!asyncResult.AsyncWaitHandle.WaitOne(1, false))
+                    {
+                        socket.Close();
+                    }
+                    else
+                    {
+                        socket.Close();
+                        ports.Add(new Port(_port, _port.ToString()));
+                    }
+                }
+
+                lv_connections.ItemsSource = ports;
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
 
-        //private void OnTimedEvent(object sender, ElapsedEventArgs e)
-        //{
-        //    if (counter != 10)
-        //    {
-        //        byte[] data = new byte[256]; // буфер для ответа
-        //        StringBuilder builder = new StringBuilder();
-        //        int bytes = 0; // количество полученных байт
-
-        //        bytes = socket.Receive(data, data.Length, 0);
-        //        if (bytes == 0) return;
-                    
-        //        builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
-
-        //        Dispatcher.Invoke(() => lv_reseivedMessages.Items.Add(builder.ToString()));
-        //        Dispatcher.Invoke(() => btn_sendMessage.IsEnabled = true);
-        //        timer.Stop();
-
-        //        // закрываем сокет
-        //        socket.Shutdown(SocketShutdown.Both);
-        //        socket.Close();
-        //    }
-        //    else
-        //    {
-        //        lv_reseivedMessages.Items.Add("Время ожидания ответа было превышено");
-        //        timer.Stop();
-        //    }
-            
-        //}
+        private static void connectCallback(IAsyncResult ar)
+        {
+            try
+            {
+                Socket client = (Socket)ar.AsyncState;
+                client.EndConnect(ar);
+                connectDone.Set();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(ar.ToString());
+            }
+        }
 
         private void btn_sendMessage_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                PortInfo connection = (PortInfo)lv_connections.SelectedItem;
-                string address = connection.address;
-                int port = connection.portNumber;
-
+                Port port= (Port)lv_connections.SelectedItem;
                 btn_sendMessage.IsEnabled = false;
-                lv_connections.IsEnabled = false;
                 String message = tb_textInput.Text;
-
-                IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse(address), port);
+                IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse(address), port.portNumber);
 
                 // подключаемся к удаленному хосту
                 Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -114,33 +111,28 @@ namespace Client
                 }
                 while (socket.Available > 0);
 
-                lv_reseivedMessages.Items.Add(builder.ToString());
+                lv_log.Items.Add("Ответ: " + builder.ToString());
                 btn_sendMessage.IsEnabled = true;
-                lv_connections.IsEnabled = true;
 
                 socket.Shutdown(SocketShutdown.Both);
                 socket.Close();
-
-
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
         }
-    }
 
-    class PortInfo
-    {
-        public int portNumber { get; set; }
-        public string local { get; set; }
-        public string address { get; set; }
-
-        public PortInfo(int portNumber, string local, string address)
+        private class Port
         {
-            this.portNumber = portNumber;
-            this.address = address;
-            this.local = local;
+            public int portNumber { get; set; }
+            public string name { get; set; }
+
+            public Port(int portNumber, string name)
+            {
+                this.portNumber = portNumber;
+                this.name = name;
+            }
         }
     }
 }

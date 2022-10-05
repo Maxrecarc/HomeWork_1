@@ -6,7 +6,7 @@ namespace SocketTcpServer
 {
     class Server
     {
-        static int port = 12345; // порт для приема входящих запросов
+        static int port = 8081; // порт для приема входящих запросов
 
         static void Main(string[] args)
         {
@@ -43,6 +43,7 @@ namespace SocketTcpServer
 
                     // отправляем ответ
                     data = Encoding.Unicode.GetBytes(builder.ToString());
+                    Console.WriteLine("Запрос получен: " + builder.ToString());
                     handler.Send(data);
                     // закрываем сокет
                     handler.Shutdown(SocketShutdown.Both);

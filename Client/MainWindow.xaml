@@ -5,24 +5,21 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Client"
         mc:Ignorable="d"
-        Title="MainWindow" Height="337" Width="514">
-    <Grid Margin="0,0,0,-6">
+        Title="MainWindow" Height="337" Width="559">
+    <Grid Margin="0,0,10,-6">
         <TextBox x:Name="tb_textInput" HorizontalAlignment="Left" Margin="23,48,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="165" Height="18"/>
         <Button x:Name="btn_sendMessage" Content="Отправить" HorizontalAlignment="Left" Margin="23,23,0,0" VerticalAlignment="Top" Click="btn_sendMessage_Click" Height="20" Width="165"/>
-        <ListView x:Name="lv_reseivedMessages" d:ItemsSource="{d:SampleData ItemCount=5}" Margin="23,71,0,19" HorizontalAlignment="Left" Width="165">
+        <ListView x:Name="lv_log" d:ItemsSource="{d:SampleData ItemCount=5}" Margin="23,71,0,19" HorizontalAlignment="Left" Width="165">
             <ListView.View>
                 <GridView>
                     <GridViewColumn/>
                 </GridView>
             </ListView.View>
         </ListView>
-        <ListView x:Name="lv_connections" d:ItemsSource="{d:SampleData ItemCount=5}" Margin="203,23,0,19" HorizontalAlignment="Left" Width="288">
+        <ListView x:Name="lv_connections" d:ItemsSource="{d:SampleData ItemCount=5}" Margin="193,23,17,19">
             <ListView.View>
                 <GridView>
-                    <GridView.Columns>
-                        <GridViewColumn Header="Local Adress" DisplayMemberBinding="{Binding Path=local}"
-                                    Width="Auto"/>
-                    </GridView.Columns>
+                    <GridViewColumn Header="Port" DisplayMemberBinding="{Binding Path = name}"/>
                 </GridView>
             </ListView.View>
         </ListView>
