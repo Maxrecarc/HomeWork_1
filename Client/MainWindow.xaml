@@ -12,14 +12,16 @@
         <ListView x:Name="lv_log" d:ItemsSource="{d:SampleData ItemCount=5}" Margin="23,71,0,19" HorizontalAlignment="Left" Width="165">
             <ListView.View>
                 <GridView>
-                    <GridViewColumn/>
+                    <GridViewColumn Header="Log" Width="150"/>
                 </GridView>
             </ListView.View>
         </ListView>
         <ListView x:Name="lv_connections" d:ItemsSource="{d:SampleData ItemCount=5}" Margin="193,23,17,19">
             <ListView.View>
                 <GridView>
-                    <GridViewColumn Header="Port" DisplayMemberBinding="{Binding Path = name}"/>
+                    <GridViewColumn Header="Address" 
+                                    DisplayMemberBinding="{Binding Path = fullAddr}"
+                                    Width="100"/>
                 </GridView>
             </ListView.View>
         </ListView>

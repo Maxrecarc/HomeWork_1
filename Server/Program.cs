@@ -1,17 +1,20 @@
 ﻿using System.Text;
 using System.Net;
 using System.Net.Sockets;
+using System.Data;
+using System;
 
 namespace SocketTcpServer
 {
     class Server
     {
-        static int port = 8081; // порт для приема входящих запросов
+        static int port = 8000; // порт для приема входящих запросов
+        static List<Dictionary<String, String>> robots;
 
         static void Main(string[] args)
         {
             // получаем адреса для запуска сокета
-            IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), port);
+            IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse("192.168.1.237"), port);
 
             // создаем сокет
             Socket listenSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -55,5 +58,29 @@ namespace SocketTcpServer
                 Console.WriteLine(ex.Message);
             }
         }
+
+        private byte[] completeTask(String command)
+        {
+            String[] str = command.Split(' ');
+
+            if (str[0] == "/")
+            {
+                switch (str[0])
+                {
+                    case "/add":
+                        Dictionary<String, String> dict = new Dictionary<String, String>();
+                        dict.Add(str[1], str[2]);
+                        robots.Add(dict);
+                        break;
+                    case "/set_name":
+                        //robots
+                        //robots.Insert()
+                        break;
+
+                }
+            }
+            return null;
+        }
+
     }
 }

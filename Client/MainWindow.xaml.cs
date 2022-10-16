@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Controls.Primitives;
 using System.Threading;
 using System.Windows.Controls;
+using System.Windows.Markup;
 
 namespace Client
 {
@@ -23,7 +24,8 @@ namespace Client
     {
 
         //Таймер и счетчик для него
-        static string address = "192.168.3.26";
+        static string address = "192.168.1.";
+        static int port = 8000;
 
         private static ManualResetEvent connectDone = new ManualResetEvent(false);
 
@@ -33,31 +35,40 @@ namespace Client
 
             try
             {
-                List<Port> ports = new List<Port>();
+                List<Addr> ports = new List<Addr>();
                 //Ищем перебором открытый порт для соединения
-                for (int _port = 8000; _port < 8100; _port++)
+                for (int addr = 1; addr < 255; addr++)
                 {
-                    IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse(address), _port);
+                    String fullAddr = address + addr.ToString();
+                    IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse(fullAddr), port);
                     Socket socket = new Socket(
                         AddressFamily.InterNetwork,
                         SocketType.Stream,
                         ProtocolType.Tcp
                         );
 
-                    IAsyncResult asyncResult = socket.BeginConnect(
-                        ipPoint,
-                        new AsyncCallback(connectCallback),
-                        socket
-                        );
+                    Ping pingSender = new Ping();
+                    int timeout = 1000;
+                    PingOptions options = new PingOptions(64, true);
+                    byte[] buffer = Encoding.ASCII.GetBytes("");
+                    AutoResetEvent waiter = new AutoResetEvent(false);
 
-                    if (!asyncResult.AsyncWaitHandle.WaitOne(1, false))
+                    PingReply reply = pingSender.Send(address + port.ToString(), timeout, buffer, options);
+
+                    //IAsyncResult asyncResult = socket.BeginConnect(
+                    //    ipPoint,
+                    //    new AsyncCallback(connectCallback),
+                    //    socket
+                    //    );
+
+                    if (reply.Status == IPStatus.Success)
                     {
                         socket.Close();
                     }
                     else
                     {
                         socket.Close();
-                        ports.Add(new Port(_port, _port.ToString()));
+                        ports.Add(new Addr(fullAddr));
                     }
                 }
 
@@ -88,10 +99,10 @@ namespace Client
         {
             try
             {
-                Port port= (Port)lv_connections.SelectedItem;
+                Addr addr = (Addr)lv_connections.SelectedItem;
                 btn_sendMessage.IsEnabled = false;
                 String message = tb_textInput.Text;
-                IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse(address), port.portNumber);
+                IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse(addr.fullAddr), port);
 
                 // подключаемся к удаленному хосту
                 Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -123,15 +134,13 @@ namespace Client
             }
         }
 
-        private class Port
+        private class Addr
         {
-            public int portNumber { get; set; }
-            public string name { get; set; }
+            public String fullAddr { get; set; }
 
-            public Port(int portNumber, string name)
+            public Addr(String addr)
             {
-                this.portNumber = portNumber;
-                this.name = name;
+                this.fullAddr = addr;
             }
         }
     }
