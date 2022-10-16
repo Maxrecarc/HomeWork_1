@@ -24,7 +24,7 @@ namespace Client
     {
 
         //Таймер и счетчик для него
-        static string address = "192.168.1.";
+        static string address = "127.0.0.";
         static int port = 8000;
 
         private static ManualResetEvent connectDone = new ManualResetEvent(false);
@@ -37,7 +37,7 @@ namespace Client
             {
                 List<Addr> ports = new List<Addr>();
                 //Ищем перебором открытый порт для соединения
-                for (int addr = 1; addr < 255; addr++)
+                for (int addr = 1; addr < 55; addr++)
                 {
                     String fullAddr = address + addr.ToString();
                     IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse(fullAddr), port);
@@ -47,13 +47,13 @@ namespace Client
                         ProtocolType.Tcp
                         );
 
-                    Ping pingSender = new Ping();
-                    int timeout = 1000;
-                    PingOptions options = new PingOptions(64, true);
-                    byte[] buffer = Encoding.ASCII.GetBytes("");
-                    AutoResetEvent waiter = new AutoResetEvent(false);
+                    //Ping pingSender = new Ping();
+                    //int timeout = 120;
+                    //PingOptions options = new PingOptions();
+                    //byte[] buffer = Encoding.ASCII.GetBytes("Attempt to connect");
+                    //AutoResetEvent waiter = new AutoResetEvent(false);
 
-                    PingReply reply = pingSender.Send(address + port.ToString(), timeout, buffer, options);
+                    //PingReply reply = pingSender.Send("127.0.0.1:8000", timeout, buffer, options);
 
                     //IAsyncResult asyncResult = socket.BeginConnect(
                     //    ipPoint,
@@ -61,14 +61,16 @@ namespace Client
                     //    socket
                     //    );
 
-                    if (reply.Status == IPStatus.Success)
+                    if (!pingHost(fullAddr, port))
                     {
-                        socket.Close();
+                        //socket.Close();
+                        Console.WriteLine(fullAddr.ToString() + " - no connect");
                     }
                     else
                     {
-                        socket.Close();
+                        //socket.Close();
                         ports.Add(new Addr(fullAddr));
+                        break;
                     }
                 }
 
@@ -141,6 +143,19 @@ namespace Client
             public Addr(String addr)
             {
                 this.fullAddr = addr;
+            }
+        }
+
+        public static bool pingHost(string hostUri, int portNumber)
+        {
+            try
+            {
+                using (var client = new TcpClient(hostUri, portNumber))
+                    return true;
+            }
+            catch (SocketException ex)
+            {
+                return false;
             }
         }
     }
