@@ -1,19 +1,10 @@
 ﻿using System;
 using System.Net.Sockets;
 using System.Net;
-using System.Net.NetworkInformation;
 using System.Text;
 using System.Windows;
-using System.Timers;
-using System.Reflection;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows.Data;
-using System.Windows.Media;
-using System.Windows.Controls.Primitives;
-using System.Threading;
-using System.Windows.Controls;
-using System.Windows.Markup;
 
 namespace Client
 {
@@ -24,77 +15,13 @@ namespace Client
     {
 
         //Таймер и счетчик для него
-        static string address = "127.0.0.";
+        static string address = "192.168.3.";
         static int port = 8000;
-
-        private static ManualResetEvent connectDone = new ManualResetEvent(false);
+        static List<Addr> ports = new List<Addr>();
 
         public MainWindow()
         {
             InitializeComponent();
-
-            try
-            {
-                List<Addr> ports = new List<Addr>();
-                //Ищем перебором открытый порт для соединения
-                for (int addr = 1; addr < 55; addr++)
-                {
-                    String fullAddr = address + addr.ToString();
-                    IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse(fullAddr), port);
-                    Socket socket = new Socket(
-                        AddressFamily.InterNetwork,
-                        SocketType.Stream,
-                        ProtocolType.Tcp
-                        );
-
-                    //Ping pingSender = new Ping();
-                    //int timeout = 120;
-                    //PingOptions options = new PingOptions();
-                    //byte[] buffer = Encoding.ASCII.GetBytes("Attempt to connect");
-                    //AutoResetEvent waiter = new AutoResetEvent(false);
-
-                    //PingReply reply = pingSender.Send("127.0.0.1:8000", timeout, buffer, options);
-
-                    //IAsyncResult asyncResult = socket.BeginConnect(
-                    //    ipPoint,
-                    //    new AsyncCallback(connectCallback),
-                    //    socket
-                    //    );
-
-                    if (!pingHost(fullAddr, port))
-                    {
-                        //socket.Close();
-                        Console.WriteLine(fullAddr.ToString() + " - no connect");
-                    }
-                    else
-                    {
-                        //socket.Close();
-                        ports.Add(new Addr(fullAddr));
-                        break;
-                    }
-                }
-
-                lv_connections.ItemsSource = ports;
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
-        }
-
-        private static void connectCallback(IAsyncResult ar)
-        {
-            try
-            {
-                Socket client = (Socket)ar.AsyncState;
-                client.EndConnect(ar);
-                connectDone.Set();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(ar.ToString());
-            }
         }
 
         private void btn_sendMessage_Click(object sender, RoutedEventArgs e)
@@ -150,12 +77,57 @@ namespace Client
         {
             try
             {
-                using (var client = new TcpClient(hostUri, portNumber))
-                    return true;
+                var client = new TcpClient();
+                var result = client.BeginConnect(hostUri, portNumber, null, null);
+                if (!result.AsyncWaitHandle.WaitOne(TimeSpan.FromMilliseconds(300)))
+                {
+                    return false;
+                }
+
+                // we have connected
+                client.Close();
+                return true;
             }
             catch (SocketException ex)
             {
                 return false;
+            }
+        }
+
+        private void btn_find_Click(object sender, RoutedEventArgs e)
+        {
+            ports.Clear();
+            String addr = tb_addr.Text;
+            if (addr.EndsWith(".0"))
+            {
+                addr = addr.Remove(tb_addr.Text.Length - 1, 1);
+
+                for (int beginLastAddr = 1; beginLastAddr < 35; beginLastAddr++)
+                {
+                    String fullAddr = addr + beginLastAddr.ToString();
+                    checkConnect(fullAddr, port);
+                }
+            }
+            else
+            {
+                addr = tb_addr.Text;
+                checkConnect(addr, port);
+            }
+
+            lv_connections.ItemsSource = null;
+            lv_connections.ItemsSource = ports;
+        }
+
+        private void checkConnect(string hostUri, int portNumber)
+        {
+            if (!pingHost(hostUri, portNumber))
+            {
+                Console.WriteLine(hostUri.ToString() + " - failure");
+            }
+            else
+            {
+                Console.WriteLine(hostUri.ToString() + " - success");
+                ports.Add(new Addr(hostUri));
             }
         }
     }

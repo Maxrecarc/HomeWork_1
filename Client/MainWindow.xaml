@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Client"
         mc:Ignorable="d"
-        Title="MainWindow" Height="337" Width="559">
+        Title="MainWindow" Height="337" Width="401">
     <Grid Margin="0,0,10,-6">
         <TextBox x:Name="tb_textInput" HorizontalAlignment="Left" Margin="23,48,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="165" Height="18"/>
         <Button x:Name="btn_sendMessage" Content="Отправить" HorizontalAlignment="Left" Margin="23,23,0,0" VerticalAlignment="Top" Click="btn_sendMessage_Click" Height="20" Width="165"/>
@@ -16,7 +16,7 @@
                 </GridView>
             </ListView.View>
         </ListView>
-        <ListView x:Name="lv_connections" d:ItemsSource="{d:SampleData ItemCount=5}" Margin="193,23,17,19">
+        <ListView x:Name="lv_connections" d:ItemsSource="{d:SampleData ItemCount=5}" Margin="193,71,19,19">
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="Address" 
@@ -25,6 +25,8 @@
                 </GridView>
             </ListView.View>
         </ListView>
+        <TextBox x:Name="tb_addr" HorizontalAlignment="Left" Margin="193,48,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="179" Height="18"/>
+        <Button x:Name="btn_find" Content="Поиск" HorizontalAlignment="Left" Margin="193,23,0,0" VerticalAlignment="Top" Width="179" Click="btn_find_Click"/>
 
     </Grid>
 </Window>
