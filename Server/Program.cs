@@ -3,13 +3,14 @@ using System.Net;
 using System.Net.Sockets;
 using System.Data;
 using System;
+using System.Collections;
 
 namespace SocketTcpServer
 {
     class Server
     {
-        static int port = 8000; // порт для приема входящих запросов
-        static List<Dictionary<String, String>> robots;
+        const int port = 8000; // порт для приема входящих запросов
+        static List<Robot> robots = new List<Robot>();
 
         static void Main(string[] args)
         {
@@ -45,7 +46,7 @@ namespace SocketTcpServer
 
 
                     // отправляем ответ
-                    data = Encoding.Unicode.GetBytes(builder.ToString());
+                    data = completeTask(builder.ToString());
                     Console.WriteLine("Запрос получен: " + builder.ToString());
                     handler.Send(data);
                     // закрываем сокет
@@ -59,28 +60,47 @@ namespace SocketTcpServer
             }
         }
 
-        private byte[] completeTask(String command)
+        static byte[] completeTask(String command)
         {
-            String[] str = command.Split(' ');
+            string[] str = command.Split(' ');
 
-            if (str[0] == "/")
+            switch (str[0])
             {
-                switch (str[0])
-                {
-                    case "/add":
-                        Dictionary<String, String> dict = new Dictionary<String, String>();
-                        dict.Add(str[1], str[2]);
-                        robots.Add(dict);
-                        break;
-                    case "/set_name":
-                        //robots
-                        //robots.Insert()
-                        break;
-
-                }
+                case "/add":
+                    {
+                        robots.Add(new Robot(str[1], str[2]));
+                        return Encoding.Unicode.GetBytes(robots.Count.ToString());
+                    }
+                case "/set_func":
+                    {
+                        int index = Int32.Parse(str[1]);
+                        Robot robot = robots[index];
+                        robot.function = str[2];
+                        robots.Insert(index, robot);
+                        return Encoding.Unicode.GetBytes("Function changed!");
+                    }
+                case "/delete":
+                    {
+                        int index = Int32.Parse(str[1]);
+                        robots.Remove(robots[index]);
+                        return Encoding.Unicode.GetBytes("Robot deleted");
+                    }
+                default:
+                    Console.WriteLine("Wrong command: " + str[0]);
+                    return Encoding.Unicode.GetBytes("Wrong command");
             }
-            return null;
         }
+    }
 
+    class Robot
+    {
+        public string name { get; set; }
+        public string function { get; set; }
+
+        public Robot(string name, string function)
+        {
+            this.name = name;
+            this.function = function;
+        }
     }
 }
