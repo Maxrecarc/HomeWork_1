@@ -100,6 +100,11 @@ namespace SocketTcpServer
                     return Encoding.Unicode.GetBytes("Wrong command");
             }
         }
+
+        public static int getRobotsCount()
+        {
+            return robots.Count;
+        }
     }
 
     class Robot

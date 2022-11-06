@@ -40,6 +40,8 @@ namespace ServerTest
             Assert.AreEqual(expectedInfo, robotInfo);
         }
 
+
+        //Проверяем, что робот удаляется корректно
         [TestMethod]
         public void removeRobotIsCorrect()
         {
@@ -47,6 +49,7 @@ namespace ServerTest
             String addCommand = "/add name function";
             String removeCommand = "/delete ";
             String expectedAnswer = "Robot deleted";
+            int expectedCount = 0;
 
             String idRobot = convertByteToString(Server.completeTask(addCommand));
 
@@ -55,6 +58,7 @@ namespace ServerTest
 
             //then
             Assert.AreEqual(expectedAnswer, result);
+            Assert.AreEqual(expectedCount, Server.getRobotsCount());
         }
 
         [TestMethod]
