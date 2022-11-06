@@ -7,7 +7,7 @@ using System.Collections;
 
 namespace SocketTcpServer
 {
-    class Server
+    public class Server
     {
         const int port = 8000; // порт для приема входящих запросов
         static List<Robot> robots = new List<Robot>();
@@ -60,7 +60,7 @@ namespace SocketTcpServer
             }
         }
 
-        static byte[] completeTask(String command)
+        public static byte[] completeTask(String command)
         {
             string[] str = command.Split(' ');
 
@@ -69,7 +69,7 @@ namespace SocketTcpServer
                 case "/add":
                     {
                         robots.Add(new Robot(str[1], str[2]));
-                        return Encoding.Unicode.GetBytes(robots.Count.ToString());
+                        return Encoding.Unicode.GetBytes((robots.Count - 1).ToString());
                     }
                 case "/set_func":
                     {
@@ -84,6 +84,16 @@ namespace SocketTcpServer
                         int index = Int32.Parse(str[1]);
                         robots.Remove(robots[index]);
                         return Encoding.Unicode.GetBytes("Robot deleted");
+                    }
+                case "/get":
+                    {
+                        int index = Int32.Parse(str[1]);
+                        if (index >= 0 && index <= robots.Count)
+                        {
+                            return Encoding.Unicode.GetBytes(robots[index].name + ": " + robots[index].function);
+                        }
+                        else return Encoding.Unicode.GetBytes("Out of range");
+
                     }
                 default:
                     Console.WriteLine("Wrong command: " + str[0]);
