@@ -12,6 +12,11 @@ namespace SocketTcpServer
         const int port = 8000; // порт для приема входящих запросов
         static List<Robot> robots = new List<Robot>();
 
+        public Server()
+        {
+            Main(new string[1]);
+        }
+
         static void Main(string[] args)
         {
             // получаем адреса для запуска сокета

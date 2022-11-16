@@ -4,7 +4,6 @@ using System.Net;
 using System.Text;
 using System.Windows;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Client
 {
@@ -15,22 +14,68 @@ namespace Client
     {
 
         //Таймер и счетчик для него
-        static string address = "192.168.3.";
-        static int port = 8000;
         static List<Addr> ports = new List<Addr>();
+        static ServerConnection serverConnection = new ServerConnection();
 
         public MainWindow()
         {
             InitializeComponent();
         }
 
-        private void btn_sendMessage_Click(object sender, RoutedEventArgs e)
+        public void btn_sendMessage_Click(object sender, RoutedEventArgs e)
+        {
+            btn_sendMessage.IsEnabled = false;
+            String message = tb_textInput.Text;
+            String response = serverConnection.sendMessage((Addr)lv_connections.SelectedItem, message);
+
+            lv_log.Items.Add("Ответ: " + response);
+            btn_sendMessage.IsEnabled = true;
+        }
+
+
+        public void btn_find_Click(object sender, RoutedEventArgs e)
+        {
+            ports.Clear();
+            ports = serverConnection.findServer(tb_addr.Text);
+
+            lv_connections.ItemsSource = null;
+            lv_connections.ItemsSource = ports;
+        }
+    }
+
+    public class ServerConnection
+    {
+        static int port = 8000;
+
+        public List<Addr> findServer(String addr)
+        {
+            List<Addr> addresses = new List<Addr>();
+            if (addr.EndsWith(".0"))
+            {
+                addr = addr.Remove(addr.Length - 1, 1);
+
+                for (int beginLastAddr = 1; beginLastAddr < 35; beginLastAddr++)
+                {
+                    String fullAddr = addr + beginLastAddr.ToString();
+                    checkConnect(fullAddr, port);
+                }
+            }
+            else
+            {
+                var res = checkConnect(addr, port);
+                if (res != null)
+                {
+                    addresses.Add(res);
+                }
+            }
+
+            return addresses;
+        }
+
+        public string sendMessage(Addr addr, string message)
         {
             try
             {
-                Addr addr = (Addr)lv_connections.SelectedItem;
-                btn_sendMessage.IsEnabled = false;
-                String message = tb_textInput.Text;
                 IPEndPoint ipPoint = new IPEndPoint(IPAddress.Parse(addr.fullAddr), port);
 
                 // подключаемся к удаленному хосту
@@ -51,29 +96,33 @@ namespace Client
                 }
                 while (socket.Available > 0);
 
-                lv_log.Items.Add("Ответ: " + builder.ToString());
-                btn_sendMessage.IsEnabled = true;
-
                 socket.Shutdown(SocketShutdown.Both);
                 socket.Close();
+
+                return builder.ToString();
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                return null;
             }
         }
 
-        private class Addr
+        private Addr checkConnect(string hostUri, int portNumber)
         {
-            public String fullAddr { get; set; }
-
-            public Addr(String addr)
+            if (!pingHost(hostUri, portNumber))
             {
-                this.fullAddr = addr;
+                Console.WriteLine(hostUri.ToString() + " - failure");
+                return null;
+            }
+            else
+            {
+                Console.WriteLine(hostUri.ToString() + " - success");
+                return new Addr(hostUri);
             }
         }
 
-        public static bool pingHost(string hostUri, int portNumber)
+        private static bool pingHost(string hostUri, int portNumber)
         {
             try
             {
@@ -93,42 +142,15 @@ namespace Client
                 return false;
             }
         }
+    }
 
-        private void btn_find_Click(object sender, RoutedEventArgs e)
+    public class Addr
+    {
+        public String fullAddr { get; set; }
+
+        public Addr(String addr)
         {
-            ports.Clear();
-            String addr = tb_addr.Text;
-            if (addr.EndsWith(".0"))
-            {
-                addr = addr.Remove(tb_addr.Text.Length - 1, 1);
-
-                for (int beginLastAddr = 1; beginLastAddr < 35; beginLastAddr++)
-                {
-                    String fullAddr = addr + beginLastAddr.ToString();
-                    checkConnect(fullAddr, port);
-                }
-            }
-            else
-            {
-                addr = tb_addr.Text;
-                checkConnect(addr, port);
-            }
-
-            lv_connections.ItemsSource = null;
-            lv_connections.ItemsSource = ports;
-        }
-
-        private void checkConnect(string hostUri, int portNumber)
-        {
-            if (!pingHost(hostUri, portNumber))
-            {
-                Console.WriteLine(hostUri.ToString() + " - failure");
-            }
-            else
-            {
-                Console.WriteLine(hostUri.ToString() + " - success");
-                ports.Add(new Addr(hostUri));
-            }
+            this.fullAddr = addr;
         }
     }
 }
