@@ -11,7 +11,7 @@ namespace ServerTest
         public void addRobotIsCorrect()
         {
             //given
-            String addCommand = "/add name function";
+            String addCommand = "/add name function attack";
             int expectedId = 0;
 
             //when
@@ -27,7 +27,7 @@ namespace ServerTest
         public void getRobotIsCorrect()
         {
             //given
-            String addCommand = "/add name function";
+            String addCommand = "/add name function heal";
             String getCommand = "/get ";
             String expectedInfo = "name: function";
 
@@ -46,7 +46,7 @@ namespace ServerTest
         public void removeRobotIsCorrect()
         {
             //given
-            String addCommand = "/add name function";
+            String addCommand = "/add name function heal";
             String removeCommand = "/delete ";
             String expectedAnswer = "Robot deleted";
             int expectedCount = 0;
@@ -73,6 +73,28 @@ namespace ServerTest
 
             //then
             Assert.AreEqual(expectedAnswer, result);
+        }
+
+        [TestMethod]
+        public void notEnoughDetailsIsCorrect()
+        {
+            String addCommandHeal = "/add name function heal";
+            String addCommandDefault = "/add name function default";
+            String addCommandAttack = "/add name function attack";
+            String deleteCommand = "/delete ";
+
+            String errorResult = "";
+            for (int i = 0; i < 6; i++)
+            {
+                errorResult = convertByteToString(Server.completeTask(addCommandHeal));
+            }
+            Server.completeTask(deleteCommand + 1);
+
+            Server.completeTask(addCommandDefault);
+            String result = convertByteToString(Server.completeTask(addCommandAttack));
+
+            Assert.AreEqual("Not enough details", errorResult);
+            Assert.AreEqual("5", result);
         }
 
         private String convertByteToString(byte[] bytes)

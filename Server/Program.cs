@@ -12,6 +12,8 @@ namespace SocketTcpServer
         const int port = 8000; // порт для приема входящих запросов
         static List<Robot> robots = new List<Robot>();
 
+        static int maxDetails = 100;
+
         public Server()
         {
             Main(new string[1]);
@@ -73,8 +75,18 @@ namespace SocketTcpServer
             {
                 case "/add":
                     {
-                        robots.Add(new Robot(str[1], str[2]));
-                        return Encoding.Unicode.GetBytes((robots.Count - 1).ToString());
+                        robots.Add(new Robot(str[1], str[2], str[3]));
+                        int details = ((int)robots.Last().type);
+                        if (maxDetails < details) 
+                        {
+                            robots.Remove(robots.Last());
+                            return Encoding.Unicode.GetBytes("Not enough details"); 
+                        }
+                        else
+                        {
+                            maxDetails -= details;
+                            return Encoding.Unicode.GetBytes((robots.Count - 1).ToString());
+                        }
                     }
                 case "/set_func":
                     {
@@ -87,6 +99,8 @@ namespace SocketTcpServer
                 case "/delete":
                     {
                         int index = Int32.Parse(str[1]);
+                        int details = (int)robots[index].type;
+                        maxDetails += details;
                         robots.Remove(robots[index]);
                         return Encoding.Unicode.GetBytes("Robot deleted");
                     }
@@ -95,7 +109,8 @@ namespace SocketTcpServer
                         int index = Int32.Parse(str[1]);
                         if (index >= 0 && index <= robots.Count)
                         {
-                            return Encoding.Unicode.GetBytes(robots[index].name + ": " + robots[index].function);
+                            return Encoding.Unicode.GetBytes(robots[index].name + ": " + robots[index].function + " (" +
+                                robots[index].type + ")");
                         }
                         else return Encoding.Unicode.GetBytes("Out of range");
 
@@ -116,11 +131,29 @@ namespace SocketTcpServer
     {
         public string name { get; set; }
         public string function { get; set; }
+        public RobotType type { get; set; }
 
-        public Robot(string name, string function)
+        RobotType convertType(string type)
+        {
+            switch (type.ToLower())
+            {
+                case "attack": return RobotType.ATTACK;
+                case "defence": return RobotType.DEFENCE;
+                case "heal": return RobotType.HEAL;
+                default: return RobotType.DEFAULT;
+            }
+        }
+
+        public Robot(string name, string function, string type)
         {
             this.name = name;
             this.function = function;
+            this.type = convertType(type);
         }
+    }
+
+    enum RobotType
+    {
+        ATTACK = 5, DEFENCE = 10, HEAL = 20, DEFAULT = 3
     }
 }
